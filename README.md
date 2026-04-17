@@ -4,6 +4,12 @@ An AI-powered studio that converts messy ideas into structured, ready-to-post so
 
 ---
 
+## 🔗 Live Demo
+
+👉 https://carousel-studio-ai.vercel.app/
+
+---
+
 ## 🚀 Features
 
 * Generate 6-slide carousels from any idea
@@ -11,6 +17,16 @@ An AI-powered studio that converts messy ideas into structured, ready-to-post so
 * Smooth slide navigation (next/prev)
 * Download all slides as images
 * Graceful fallback when API fails
+
+---
+
+## ⚙️ How It Works
+
+1. User enters a messy idea
+2. AI structures it into a 6-slide story
+3. Slides follow a clear flow:
+   **Hook → Problem → Insight → Example → Takeaway → CTA**
+4. User can preview and download instantly
 
 ---
 
@@ -23,9 +39,7 @@ Most users struggle to convert raw thoughts into engaging posts.
 
 ## 💡 Solution
 
-This tool takes messy input and transforms it into a structured storytelling format:
-
-**Hook → Problem → Insight → Tip → Example → CTA**
+This tool transforms unstructured input into a clean storytelling format that is ready to post on social media.
 
 ---
 
@@ -34,12 +48,6 @@ This tool takes messy input and transforms it into a structured storytelling for
 * React (Vite)
 * Tailwind CSS
 * Groq API (LLM)
-
----
-
-## 🔗 Live Demo
-
-👉 https://carousel-studio-ai.vercel.app/
 
 ---
 
@@ -90,7 +98,7 @@ VITE_GROQ_API_KEY=your_api_key_here
 
 ## 📌 Notes
 
-* Designed to handle messy input and convert it into usable content
+* Designed to handle messy input effectively
 * Built with focus on simplicity, speed, and reliability
 
 ---
