@@ -1,3 +1,6 @@
+// ─── Feature flag ─────────────────────────────────────────────────────────────────
+const ENABLE_IMAGES = false; // flip to true to re-enable AI image backgrounds
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 const cleanJson = (text) =>
@@ -15,6 +18,18 @@ const limitWords = (value, maxWords) =>
     .filter(Boolean)
     .slice(0, maxWords)
     .join(' ');
+
+// ─── Image URL Builder (Pollinations.ai — free, no API key) ──────────────────
+// Produces a deterministic URL for a given slide. The browser fetches it lazily.
+export function buildImageUrl(slide, slideIndex) {
+  const prompt = encodeURIComponent(
+    `Minimal clean digital illustration, soft pastel abstract art, representing "${slide.title}": ${slide.content
+    }. Geometric shapes, no text, no words, no letters, editorial quality, muted palette`
+  );
+  // seed is stable per slide position → same slide always gets same image
+  const seed = (slideIndex + 1) * 137;
+  return `https://image.pollinations.ai/prompt/${prompt}?width=1080&height=1080&nologo=true&seed=${seed}&model=flux`;
+}
 
 // ─── Fallback (shown when API fails) ─────────────────────────────────────────
 
@@ -132,16 +147,119 @@ Example format:
       throw new Error('Response is not an array');
     }
 
-    const slides = parsed.map((slide, index) => ({
-      slide: index + 1,
-      title: limitWords(slide.title, 5) || `Slide ${index + 1}`,
-      content: limitWords(slide.content, 12) || 'Try a sharper topic',
-    }));
+    const slides = parsed.map((slide, index) => {
+      const s = {
+        slide: index + 1,
+        title: limitWords(slide.title, 5) || `Slide ${index + 1}`,
+        content: limitWords(slide.content, 12) || 'Try a sharper topic',
+      };
+      if (ENABLE_IMAGES) s.image = buildImageUrl(s, index);
+      return s;
+    });
 
     console.log('[CarouselAI] Parsed', slides.length, 'slides successfully');
     return slides;
   } catch (parseErr) {
     console.error('[CarouselAI] JSON parse failed:', parseErr.message);
     return [{ slide: 1, title: 'Error', content: 'Try again later' }];
+  }
+}
+
+// ─── Per-slide Regeneration ───────────────────────────────────────────────────
+
+const SLIDE_LABELS = ['Hook', 'Problem', 'Insight', 'Tip', 'Example', 'CTA'];
+
+/**
+ * Regenerate a single slide without touching the others.
+ * @param {string} topic       - Original carousel topic
+ * @param {number} slideIndex  - 0-based index of the slide to replace
+ * @param {Array}  allSlides   - Current full slides array (for context)
+ * @returns {Promise<{title:string, content:string}>}
+ */
+export async function regenerateSlide(topic, slideIndex, allSlides) {
+  const apiKey = import.meta.env.VITE_GROQ_API_KEY;
+  if (!apiKey) throw new Error('MISSING_KEY');
+
+  const position = SLIDE_LABELS[slideIndex] ?? `Slide ${slideIndex + 1}`;
+  const slideNum = slideIndex + 1;
+  const totalNum = allSlides.length;
+
+  // Give the model the full carousel context so it stays coherent and non-repetitive
+  const context = allSlides
+    .map((s, i) =>
+      i === slideIndex
+        ? `  Slide ${i + 1} [${SLIDE_LABELS[i] ?? 'Slide'}]: ← regenerate this`
+        : `  Slide ${i + 1} [${SLIDE_LABELS[i] ?? 'Slide'}]: "${s.title}" — ${s.content}`
+    )
+    .join('\n');
+
+  const prompt = `You are a JSON API that writes one slide for an Instagram carousel.
+
+Return ONLY a valid JSON object. No markdown. No explanation. No extra text.
+
+The object must have:
+- title (3–5 words)
+- content (8–12 words)
+
+Carousel topic: ${topic}
+Slide to write: Slide ${slideNum} of ${totalNum} — the "${position}" slide
+${position === 'Hook' ? 'Goal: strong curiosity opener; make the reader want to swipe.' : ''}
+${position === 'Problem' ? 'Goal: state the core pain point clearly and relatably.' : ''}
+${position === 'Insight' ? 'Goal: deliver a simple, non-obvious insight about the topic.' : ''}
+${position === 'Tip' ? 'Goal: one concrete, actionable tip the reader can use today.' : ''}
+${position === 'Example' ? 'Goal: a brief real-world example that illustrates the concept.' : ''}
+${position === 'CTA' ? 'Goal: motivate the reader to save, share, or take action.' : ''}
+
+Full carousel context (your new slide must fit naturally and NOT repeat other slides):
+${context}
+
+Rules:
+- title: exactly 3–5 words, no emojis
+- content: exactly 8–12 words, no emojis
+- Do NOT repeat ideas from other slides
+
+Return ONLY this JSON:
+{ "title": "...", "content": "..." }`;
+
+  let response;
+  try {
+    response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.75,
+      }),
+    });
+  } catch (networkErr) {
+    console.error('[regenerateSlide] Network error:', networkErr.message);
+    throw new Error('API_ERROR');
+  }
+
+  if (!response.ok) {
+    const status = response.status;
+    if (status === 429) throw new Error('RATE_LIMIT');
+    if (status === 401) throw new Error('MISSING_KEY');
+    throw new Error('API_ERROR');
+  }
+
+  const data = await response.json();
+  const text = data?.choices?.[0]?.message?.content || '';
+  const cleaned = cleanJson(text);
+
+  try {
+    const parsed = JSON.parse(cleaned);
+    const newSlide = {
+      title: limitWords(parsed.title, 5) || `Slide ${slideNum}`,
+      content: limitWords(parsed.content, 12) || 'Try a new angle.',
+    };
+    if (ENABLE_IMAGES) newSlide.image = buildImageUrl(newSlide, slideIndex);
+    return newSlide;
+  } catch {
+    throw new Error('PARSE_ERROR');
   }
 }

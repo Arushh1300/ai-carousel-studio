@@ -8,6 +8,7 @@ export default function Home() {
   const [slides, setSlides] = useState([]);
   const [deckVersion, setDeckVersion] = useState(0);
   const [errorMessage, setErrorMessage] = useState('');
+  const [format, setFormat] = useState('square');
 
   return (
     <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-10 px-5 py-10 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(380px,520px)] lg:items-center lg:gap-12 lg:py-14">
@@ -33,7 +34,7 @@ export default function Home() {
               setSlides={setSlides}
               isGenerating={isGenerating}
               setIsGenerating={setIsGenerating}
-              onGenerated={() => setDeckVersion((version) => version + 1)}
+              onGenerated={() => setDeckVersion((v) => v + 1)}
               errorMessage={errorMessage}
               setErrorMessage={setErrorMessage}
             />
@@ -42,7 +43,15 @@ export default function Home() {
       </section>
 
       <section className="flex min-h-[560px] items-center justify-center rounded-2xl border border-slate-200 bg-white/55 p-4 shadow-xl shadow-slate-900/5 md:p-8">
-        <CarouselPreview key={deckVersion} slides={slides} isLoading={isGenerating} />
+        <CarouselPreview
+          key={deckVersion}
+          slides={slides}
+          setSlides={setSlides}
+          isLoading={isGenerating}
+          format={format}
+          onFormatChange={setFormat}
+          topic={topic}
+        />
       </section>
     </main>
   );
