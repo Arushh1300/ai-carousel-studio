@@ -14,8 +14,12 @@ An AI-powered studio that converts messy ideas into structured, ready-to-post so
 
 * Generate 6-slide carousels from any idea
 * Handles messy, unstructured input intelligently
+* Clean storytelling flow (Hook → Problem → Insight → Tip → Example → CTA)
+* Editable slides for quick customization
+* Per-slide regeneration for fast iteration
+* Format support (1:1, 9:16, 4:5)
 * Smooth slide navigation (next/prev)
-* Download all slides as images
+* Download all slides as high-quality images
 * Graceful fallback when API fails
 
 ---
@@ -24,16 +28,14 @@ An AI-powered studio that converts messy ideas into structured, ready-to-post so
 
 1. User enters a messy idea
 2. AI structures it into a 6-slide story
-3. Slides follow a clear flow:
-   **Hook → Problem → Insight → Example → Takeaway → CTA**
-4. User can preview and download instantly
+3. Slides follow a clear storytelling flow
+4. User can preview, edit, regenerate, and download instantly
 
 ---
 
 ## 🧠 Problem
 
-Creating educational content for parents is slow and requires structuring ideas clearly.
-Most users struggle to convert raw thoughts into engaging posts.
+Creating educational content for parents is slow and requires structuring ideas clearly. Most users struggle to convert raw thoughts into engaging posts.
 
 ---
 
@@ -47,7 +49,7 @@ This tool transforms unstructured input into a clean storytelling format that is
 
 * React (Vite)
 * Tailwind CSS
-* Groq API (LLM)
+* Groq API (Llama 3.3)
 
 ---
 
@@ -75,8 +77,9 @@ VITE_GROQ_API_KEY=your_api_key_here
 ## ⚙️ Key Decisions
 
 * Focused on core flow: idea → structured output
-* Kept UI minimal and fast
-* Added fallback system to handle API failures
+* Prioritized clarity and readability over unnecessary visual complexity
+* Disabled image generation to maintain consistency and reliability
+* Ensured the app never breaks using fallback handling
 
 ---
 
@@ -84,15 +87,16 @@ VITE_GROQ_API_KEY=your_api_key_here
 
 * Limited to carousel format only
 * No authentication to reduce friction
-* No image generation to keep performance fast
+* Image generation disabled in final version for better UX
 
 ---
 
 ## 🚀 Future Improvements
 
-* Editable slides
-* Multiple formats (stories, posts)
-* Brand templates and themes
+* AI-generated visuals with better control
+* Brand templates (colors, fonts)
+* More formats (stories, posts)
+* Slide-level customization enhancements
 
 ---
 
